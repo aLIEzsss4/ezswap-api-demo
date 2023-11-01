@@ -3,13 +3,10 @@ import { DataGrid } from '@mui/x-data-grid';
 import {
   Typography, Box, TextField, Button,
 } from '@mui/material';
-import mathLib from 'ezswap_math';
-import {
-  utils, BigNumber, getDefaultProvider, ethers, constants,
-} from 'ethers';
+import { formatEther, toHex, maxUint256 } from 'viem'
 import { toast } from 'react-toastify';
 import {
-  useAccount, useConnect, useDisconnect, useClient, useChainId,
+  useAccount, useChainId,
 } from 'wagmi';
 import {
   buyMultipleNFT, buyMultipleNFTERC20, sellMultipleNFT, setApproval, approveTokenRouter,
@@ -43,35 +40,35 @@ const columns = [
     field: 'spotPrice',
     headerName: 'spotPrice',
     width: 100,
-    valueGetter: (data) => (Number(utils.formatEther(data?.row?.spotPrice))),
+    valueGetter: (data) => (Number(formatEther(data?.row?.spotPrice))),
   },
   {
     field: 'delta',
     headerName: 'delta',
     width: 100,
-    valueGetter: (data) => (Number(utils.formatEther(data?.row?.delta))),
+    valueGetter: (data) => (Number(formatEther(data?.row?.delta))),
   },
   {
     field: 'fee',
     headerName: 'swap fee',
     width: 100,
-    valueGetter: (data) => (Number(utils.formatEther(data?.row?.fee))),
+    valueGetter: (data) => (Number(formatEther(data?.row?.fee))),
   },
   {
     field: 'protocolFee',
     headerName: 'protocolFee',
     width: 100,
-    valueGetter: (data) => (Number(utils.formatEther(data?.row?.protocolFee))),
-  },{
+    valueGetter: (data) => (Number(formatEther(data?.row?.protocolFee))),
+  }, {
     field: 'vol',
     headerName: 'vol',
     width: 100,
-    valueGetter: (data) => (Number(utils.formatEther(data?.row?.ethVolume))),
-  },{
+    valueGetter: (data) => (Number(formatEther(data?.row?.ethVolume))),
+  }, {
     field: 'balance',
     headerName: 'balance',
     width: 100,
-    valueGetter: (data) => (Number(utils.formatEther(data?.row?.ethBalance))),
+    valueGetter: (data) => (Number(formatEther(data?.row?.ethBalance))),
   },
   // { field: 'gfee', headerName: 'gfee', width: 100 },
 ];
@@ -111,10 +108,10 @@ export default function NftTable({
         // todo 项目方协议费,自定义设置 例:0.5%计算时换算成0.005
         const projectFee = 0.005;
         const priceItem = mathLib?.[bondingCurve]?.[action](
-          Number(utils.formatEther(spotPrice)),
-          Number(utils.formatEther(delta)),
-          Number(utils.formatEther(fee)),
-          Number(utils.formatEther(protocolFee)),
+          Number(formatEther(spotPrice)),
+          Number(formatEther(delta)),
+          Number(formatEther(fee)),
+          Number(formatEther(protocolFee)),
           projectFee,
           index,
         );
@@ -134,7 +131,7 @@ export default function NftTable({
   }, [poolList, index]); */
 
   const approve = () => {
-    const chainIdHex = ethers.BigNumber.from(chainId).toHexString();
+    const chainIdHex = toHex(chainId);
     setApproval({
       nftContractAddress,
       chainId: chainIdHex,
@@ -150,7 +147,7 @@ export default function NftTable({
       toast.warn('Please connect the wallet!');
     }
     const selectedList = selectedKeys?.map((key) => poolList.find((c) => c.id === key));
-    const chainIdHex = ethers.BigNumber.from(chainId).toHexString();
+    const chainIdHex = toHex(chainId);
     if (ActionType === 'Buy') {
       // 从池子里购买NFT,
       if (selectedList[0].token === '0x0000000000000000000000000000000000000000') {
@@ -278,8 +275,8 @@ export default function NftTable({
         <Button
           variant="contained"
           onClick={async () => {
-            const amount = constants.MaxUint256;
-            const chainIdHex = ethers.BigNumber.from(chainId).toHexString();
+            const amount = maxUint256;
+            const chainIdHex = toHex(chainId);
             const selectedList = selectedKeys?.map((key) => poolList.find((c) => c.id === key));
             await approveTokenRouter({
               tokenAddress: selectedList[0].token,

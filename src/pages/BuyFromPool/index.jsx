@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { parseEther } from 'viem'
 import {
   Button, Box, FormControl, InputLabel, Input, FormHelperText, Stack, Grid,
 } from '@mui/material';
@@ -8,6 +9,7 @@ import { queryPoolListByPage } from '../../service/pool';
 import NftTable from '../../components/NftTable';
 import Header from '../../components/Header';
 import queryABI from '../../ABI/queryABI.json';
+import { walletClient,wagmiConfig } from '../../App';
 
 function BuyFromPool() {
   // 0xf8e23bc73bba99d3f3e40a4372ed7de52b004bdb
@@ -16,7 +18,7 @@ function BuyFromPool() {
   const [poolList, setPoolList] = useState([]);
   const chainId = useChainId();
   const getPoolList = async () => {
-    console.log('chainId', chainId);
+
     let network = 'dev';
     if (chainId === 280) {
       network = 'zks_dev';
@@ -35,7 +37,10 @@ function BuyFromPool() {
     } else if (chainId === 2970385) {
       const provider = new ethers.providers.Web3Provider(window?.ethereum);
       const eventSignature = '0xf5bdc103c3e68a20d5f97d2d46792d3fdddfa4efeb6761f8141e6a7b936ca66c';
-      const latestBlock = await provider.getBlockNumber();
+      // const latestBlock = await provider.getBlockNumber();
+
+      const latestBlock = await wagmiConfig.publicClient.getBlockNumber() 
+
       const filter = {
         fromBlock: 711850,
         toBlock: latestBlock,
@@ -110,7 +115,7 @@ function BuyFromPool() {
           updateTimestamp: i,
           nftCount: poolInformation[i].nftCount.toString(),
           fromPlatform: 1,
-          protocolFee: ethers.utils.parseEther('0.005').toString(),
+          protocolFee: parseEther('0.005').toString(),
           is1155: poolInformation[i].is1155,
           nftId1155: poolInformation[i].nftId1155.toString(),
           nftCount1155: poolInformation[i].nftCount1155.toString(),

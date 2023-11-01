@@ -1,13 +1,14 @@
-import { WagmiConfig, createClient, configureChains } from 'wagmi';
+import { configureChains, createConfig, WagmiConfig } from 'wagmi';
 import { ToastContainer } from 'react-toastify';
-import { alchemyProvider } from 'wagmi/providers/alchemy';
 import {
   getDefaultWallets,
   RainbowKitProvider,
 } from '@rainbow-me/rainbowkit';
+import { createWalletClient, custom, createPublicClient, http } from 'viem'
 import {
-  mainnet, polygon, goerli, zkSyncTestnet, polygonMumbai, arbitrum, arbitrumGoerli,
-} from 'wagmi/chains';
+  mainnet, polygon, goerli, zkSyncTestnet, polygonMumbai, arbitrum, arbitrumGoerli, mantaTestnet, manta
+} from 'viem/chains';
+import { alchemyProvider } from 'wagmi/providers/alchemy';
 import { publicProvider } from 'wagmi/providers/public';
 import {
   createBrowserRouter, RouterProvider, Route, Routes, createHashRouter,
@@ -40,7 +41,7 @@ const neoevm = {
   testnet: true,
 };
 
-const mantatest = {
+const mantatest2 = {
   id: 3441005,
   name: 'Manta Testnet L2 Rollup',
   network: 'Manta Testnet L2 Rollup',
@@ -82,24 +83,33 @@ const mantamain = {
   testnet: false,
 };
 
-const { chains, provider } = configureChains(
-  [goerli, polygon, polygonMumbai, arbitrum, mantamain, arbitrumGoerli, zkSyncTestnet, mantatest],
+
+export const { chains, publicClient } = configureChains(
+  [goerli, polygon, polygonMumbai, arbitrum, manta, arbitrumGoerli, zkSyncTestnet, mantaTestnet],
   [
     alchemyProvider({ apiKey: 'eeb2JnW2JdlOkqPH6NZVhVpRSXKaSW8D' }),
-    publicProvider(),
-  ],
+    publicProvider()
+  ]
 );
+
 
 const { connectors } = getDefaultWallets({
   appName: 'My RainbowKit App',
-  chains,
+  projectId: 'YOUR_PROJECT_ID',
+  chains
 });
 
-const wagmiClient = createClient({
+export const wagmiConfig = createConfig({
   autoConnect: true,
   connectors,
-  provider,
-});
+  publicClient
+})
+
+
+export const walletClient = createWalletClient({
+  chain: chains,
+  transport: custom(window.ethereum)
+})
 
 const router = createHashRouter([
   {
@@ -126,7 +136,7 @@ const router = createHashRouter([
 
 function App() {
   return (
-    <WagmiConfig client={wagmiClient}>
+    <WagmiConfig config={wagmiConfig}>
       <RainbowKitProvider chains={chains}>
         <RouterProvider router={router} />
         <ToastContainer />

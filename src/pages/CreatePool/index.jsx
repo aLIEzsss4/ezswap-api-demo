@@ -9,7 +9,8 @@ import { useFormik } from 'formik';
 import { useAccount, useChainId } from 'wagmi';
 import mathLib from 'ezswap_math';
 import { toast } from 'react-toastify';
-import { ethers, utils, constants } from 'ethers';
+import { maxUint256, toHex, parseEther } from 'viem'
+
 import Header from '../../components/Header';
 import {
   createPair, setApproval, approveToken, allowanceToken, createV2Pair,
@@ -205,7 +206,7 @@ function CreatePool() {
         toast.error('startPrice empty');
         return;
       }
-      const chainIdHex = ethers.BigNumber.from(chainId).toHexString();
+      const chainIdHex = toHex(chainId);
       let total = '0';
       let delta = 0;
 
@@ -222,16 +223,16 @@ function CreatePool() {
         || priceData?.buyPriceData?.priceData?.delta;
       }
       console.log('delta', delta);
-      console.log('delta', utils.parseEther(delta?.toString()));
+      console.log('delta', parseEther(delta?.toString()));
 
       const params = [
         values?.collectionAddress, // NFT地址
         curveAddressMap[chainIdHex]?.[values?.model], // 价格模型地址
         values.poolType === 'trade' ? '0x0000000000000000000000000000000000000000' : address, // assetRecipient
         poolTypeMap?.[values.poolType], // buy: 0, sell: 1, trade: 2,
-        utils.parseEther(delta?.toString()),
-        utils.parseEther(values?.fee?.toString()), // fee 只有trade池子才有
-        utils.parseEther(values?.spotPrice?.toString()), // 开始价格
+        parseEther(delta?.toString()),
+        parseEther(values?.fee?.toString()), // fee 只有trade池子才有
+        parseEther(values?.spotPrice?.toString()), // 开始价格
         [], // initialNFTIDs
       ];
 
@@ -248,7 +249,7 @@ function CreatePool() {
           // 第一位
           params.splice(0, 0, values?.tokenAddress);
           // 后面
-          const amount = utils.parseEther(values?.initialTokenBalance?.toString());
+          const amount = parseEther(values?.initialTokenBalance?.toString());
           params.push(amount);
           // 判断是否已经 approve
           const allowanceAmount = await allowanceToken({
@@ -265,7 +266,7 @@ function CreatePool() {
             });
           }
         } else if (values?.ttttype === 'ERC721-NativeToken') {
-          params.push({ value: utils.parseEther(total) });
+          params.push({ value: parseEther(total) });
         }
       } else if (values?.ttttype === 'ERC1155-NativeToken' || values?.ttttype === 'ERC1155-ERC20') {
         if (!(values?.tokenId) && values?.tokenId !== 0) {
@@ -279,7 +280,7 @@ function CreatePool() {
           // 第一位
           params.splice(0, 0, values?.tokenAddress);
           // 后面
-          const amount = utils.parseEther(values?.initialTokenBalance?.toString());
+          const amount = parseEther(values?.initialTokenBalance?.toString());
           params.push(amount);
           // 判断是否已经 approve
           const allowanceAmount = await allowanceToken({
@@ -296,7 +297,7 @@ function CreatePool() {
             });
           }
         } else if (values?.ttttype === 'ERC1155-NativeToken') {
-          params.push({ value: utils.parseEther(total) });
+          params.push({ value: parseEther(total) });
         }
       }
 
@@ -340,14 +341,14 @@ function CreatePool() {
   }, [priceJson]);
 
   useEffect(() => {
-    console.log('chainId', ethers.BigNumber.from(chainId).toHexString());
+    console.log('chainId',toHex(chainId));
     if (formik?.values?.ttttype === 'ERC721-ERC20' || formik?.values?.ttttype === 'ERC721-NativeToken') {
-      formik.setFieldValue('collectionAddress', CollectionAddress[ethers.BigNumber.from(chainId).toHexString()].ERC721);
+      formik.setFieldValue('collectionAddress', CollectionAddress[toHex(chainId)].ERC721);
     } else {
-      formik.setFieldValue('collectionAddress', CollectionAddress[ethers.BigNumber.from(chainId).toHexString()].ERC1155);
+      formik.setFieldValue('collectionAddress', CollectionAddress[toHex(chainId)].ERC1155);
     }
     if (formik?.values?.ttttype === 'ERC721-ERC20' || formik?.values?.ttttype === 'ERC1155-ERC20') {
-      formik.setFieldValue('tokenAddress', CollectionAddress[ethers.BigNumber.from(chainId).toHexString()].ERC20);
+      formik.setFieldValue('tokenAddress', CollectionAddress[toHex(chainId)].ERC20);
     }
   }, [chainId, formik.values.ttttype]);
 
@@ -415,7 +416,7 @@ function CreatePool() {
                         variant="contained"
                         sx={{ my: 3 }}
                         onClick={async () => {
-                          const chainIdHex = ethers.BigNumber.from(chainId).toHexString();
+                          const chainIdHex = toHex(chainId);
                           await setApproval({
                             nftContractAddress: formik.values.collectionAddress,
                             chainId: chainIdHex,
@@ -441,8 +442,8 @@ function CreatePool() {
                           variant="contained"
                           sx={{ my: 3 }}
                           onClick={async () => {
-                            const amount = constants.MaxUint256;
-                            const chainIdHex = ethers.BigNumber.from(chainId).toHexString();
+                            const amount = maxUint256;
+                            const chainIdHex = toHex(chainId);
                             await approveToken({
                               tokenAddress: formik.values.tokenAddress,
                               amount,
